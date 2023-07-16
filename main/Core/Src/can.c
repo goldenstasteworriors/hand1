@@ -21,7 +21,9 @@
 #include "can.h"
 
 /* USER CODE BEGIN 0 */
-
+CAN_HandleTypeDef   g_canx_handler;     /* CANx句柄 */
+CAN_TxHeaderTypeDef g_canx_txheader;    /* 发送参数句柄 */
+CAN_RxHeaderTypeDef g_canx_rxheader;    /* 接收参数句柄 */
 /* USER CODE END 0 */
 
 CAN_HandleTypeDef hcan1;
@@ -40,7 +42,7 @@ void MX_CAN1_Init(void)
   /* USER CODE END CAN1_Init 1 */
   hcan1.Instance = CAN1;
   hcan1.Init.Prescaler = 4;
-  hcan1.Init.Mode = CAN_MODE_NORMAL;
+  hcan1.Init.Mode = CAN_MODE_LOOPBACK;
   hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
   hcan1.Init.TimeSeg1 = CAN_BS1_12TQ;
   hcan1.Init.TimeSeg2 = CAN_BS2_8TQ;
@@ -226,5 +228,72 @@ void HAL_CAN_MspDeInit(CAN_HandleTypeDef* canHandle)
 }
 
 /* USER CODE BEGIN 1 */
+void CAN_Filter_Config(void)
+{
+CAN_FilterTypeDef CAN_FilterInitStructure;
+CAN_FilterInitStructure.FilterBank=0;
+CAN_FilterInitStructure.FilterMode=CAN_FILTERMODE_IDMASK;
+CAN_FilterInitStructure.FilterScale=CAN_FILTERSCALE_32BIT;
+CAN_FilterInitStructure.FilterIdHigh=0x0000;//((((uint32_t)0x1314<<3)|CAN_ID_EXT|CAN_RTR_DATA)&0XFFFF0000)>>16;
+CAN_FilterInitStructure.FilterIdHigh=0x0000;//(((uint32_t)0x1314<<3)|CAN_ID_EXT|CAN_RTR_DATA)&0XFFFF0000;
+CAN_FilterInitStructure.FilterMaskIdHigh=0x0000;//0xffff;
+CAN_FilterInitStructure.FilterMaskIdLow=0x0000;//0xffff;
+CAN_FilterInitStructure.FilterFIFOAssignment=CAN_RX_FIFO0;
+CAN_FilterInitStructure.FilterActivation=CAN_FILTER_ENABLE;
+CAN_FilterInitStructure.SlaveStartFilterBank=14;
+HAL_CAN_ConfigFilter(&hcan1,&CAN_FilterInitStructure);
+HAL_CAN_Start(&hcan1);
+HAL_CAN_ActivateNotification(&hcan1,CAN_IT_RX_FIFO0_MSG_PENDING);
+}
+CAN_TxHeaderTypeDef Can_HandleTxMsg;
+void CAN1_send(void)
+{
+uint32_t *pTxMailbox;
+uint8_t temp[]="CAN总线-启动";
+Can_HandleTxMsg.ExtId=0x1314;
+Can_HandleTxMsg.IDE=CAN_ID_EXT;
+Can_HandleTxMsg.RTR=CAN_RTR_DATA;
+Can_HandleTxMsg.DLC=15;
+HAL_CAN_AddTxMessage(&hcan1,&Can_HandleTxMsg,temp,pTxMailbox);
+}
+uint8_t can_send_msg(uint32_t id, uint8_t *msg, uint8_t len)
+{
+  uint32_t TxMailbox = CAN_TX_MAILBOX0;
+    
+  g_canx_txheader.StdId = id;         /* 标准标识符 */
+  g_canx_txheader.ExtId = id;         /* 扩展标识符(29位) 标准标识符情况下，该成员无效*/
+  g_canx_txheader.IDE = CAN_ID_STD;   /* 使用标准标识符 */
+  g_canx_txheader.RTR = CAN_RTR_DATA; /* 数据帧 */
+  g_canx_txheader.DLC = len;
 
+  if (HAL_CAN_AddTxMessage(&g_canx_handler, &g_canx_txheader, msg, &TxMailbox) != HAL_OK) /* 发送消息 */
+  {
+    return 1;
+  }
+  
+  while (HAL_CAN_GetTxMailboxesFreeLevel(&g_canx_handler) != 3); /* 等待发送完成,所有邮箱(有三个邮箱)为空 */
+  
+  return 0;
+}
+
+
+uint8_t can_receive_msg(uint32_t id, uint8_t *buf)
+{
+  if (HAL_CAN_GetRxFifoFillLevel(&g_canx_handler, CAN_RX_FIFO0) == 0)     /* 没有接收到数据 */
+  {
+    return 0;
+  }
+
+  if (HAL_CAN_GetRxMessage(&g_canx_handler, CAN_RX_FIFO0, &g_canx_rxheader, buf) != HAL_OK)  /* 读取数据 */
+  {
+    return 0;
+  }
+  
+  if (g_canx_rxheader.StdId!= id || g_canx_rxheader.IDE != CAN_ID_STD || g_canx_rxheader.RTR != CAN_RTR_DATA)       /* 接收到的ID不对 / 不是标准帧 / 不是数据帧 */
+  {
+    return 0;    
+  }
+
+  return g_canx_rxheader.DLC;
+}
 /* USER CODE END 1 */

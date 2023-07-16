@@ -29,7 +29,10 @@ extern "C" {
 #include "main.h"
 
 /* USER CODE BEGIN Includes */
-
+void CAN1_send(void);
+void CAN_Filter_Config(void);
+uint8_t can_send_msg(uint32_t id, uint8_t *msg, uint8_t len);
+uint8_t can_receive_msg(uint32_t id, uint8_t *buf);
 /* USER CODE END Includes */
 
 extern CAN_HandleTypeDef hcan1;
