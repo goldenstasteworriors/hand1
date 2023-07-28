@@ -34,7 +34,19 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
-
+#include <stdio.h>
+extern UART_HandleTypeDef huart1;
+int fputc(int ch,FILE *f)
+{
+HAL_UART_Transmit(&huart1,(uint8_t*)&ch,1,0xffff);
+return ch;
+}
+int fgrtc(FILE *f)
+{
+uint8_t ch=0;
+	HAL_UART_Receive(&huart1,&ch,1,0xffff);
+	return ch;
+}
 /** @addtogroup STM32F4xx_HAL_Driver
   * @{
   */

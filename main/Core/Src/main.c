@@ -105,9 +105,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 HAL_TIM_Base_Start_IT(&htim2);
 CAN_Filter_Config();
-HAL_UART_Receive_IT(&huart1,(uint8_t *)&aRxBuffer,1);
-uint8_t shuju[]="CAN×ÜÏß-Æô¶¯";
-HAL_UART_Transmit(&huart1,shuju,15,0xffff);
+
 
   /* USER CODE END 2 */
 
@@ -176,15 +174,26 @@ CAN1_send();
 
 }
 CAN_RxHeaderTypeDef Can_HandleRxMsg;
-uint8_t num[15];
+uint8_t rxbuf[15];
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
 Can_HandleRxMsg.DLC=15;
-Can_HandleRxMsg.ExtId=0x1314;
-Can_HandleRxMsg.IDE=CAN_ID_EXT;
+Can_HandleRxMsg.StdId=0x601;
+Can_HandleRxMsg.IDE=CAN_ID_STD;
 Can_HandleRxMsg.RTR=CAN_RTR_DATA;
-HAL_CAN_GetRxMessage(&hcan1,CAN_RX_FIFO0,&Can_HandleRxMsg,num);
-HAL_UART_Transmit(&huart1,num,15,0xffff);
+HAL_CAN_GetRxMessage(&hcan1,CAN_RX_FIFO0,&Can_HandleRxMsg,rxbuf);
+    printf("id:%d\r\n",Can_HandleRxMsg.StdId);
+    printf("ide:%d\r\n",Can_HandleRxMsg.IDE);
+    printf("rtr:%d\r\n",Can_HandleRxMsg.RTR);
+    printf("len:%d\r\n",Can_HandleRxMsg.DLC);
+    printf("rxbuf[0]:%d\r\n",rxbuf[0]);
+    printf("rxbuf[1]:%d\r\n",rxbuf[1]);
+    printf("rxbuf[2]:%d\r\n",rxbuf[2]);
+    printf("rxbuf[3]:%d\r\n",rxbuf[3]);
+    printf("rxbuf[4]:%d\r\n",rxbuf[4]);
+    printf("rxbuf[5]:%d\r\n",rxbuf[5]);
+    printf("rxbuf[6]:%d\r\n",rxbuf[6]);
+    printf("rxbuf[7]:%d\r\n",rxbuf[7]);
 }
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
