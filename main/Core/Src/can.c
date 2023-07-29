@@ -278,8 +278,7 @@ uint8_t can_send_msg(uint32_t id, uint8_t *msg, uint8_t len)
   return 0;
 }
 
-//发送8字节数据，用于canopen信号发送，参数为 
-//id:COB-ID     msg:要发送的数据
+//发送8字节数据，用于canopen信号发送，参数为 1. COB-ID 2. 要发送的数据
 uint8_t can_write(uint32_t id, uint8_t *msg)
 {
   uint32_t TxMailbox = CAN_TX_MAILBOX0;
@@ -300,24 +299,7 @@ uint8_t can_write(uint32_t id, uint8_t *msg)
   return 0;
 }
 
-////uint8_t can_writeRTR(uint32_t std_id)
-////{
-////	CAN_TxHeaderTypeDef temp;
-////	uint8_t mbox;
-////	temp.StdId = std_id;
-////	temp.IDE = CAN_ID_STD;
-////	temp.RTR = CAN_RTR_DATA;
-////	temp.DLC = 0;
-////	uint8_t data[8]={0,0,0,0,0,0,0,0};
-////	memcpy(temp.Data,data,8);
-
-////	mbox = CAN_Transmit(CAN1,&temp);
-////	while(CAN_TransmitStatus(CAN1, mbox)==CAN_TxStatus_Failed);
-////	return 1;
-////}
-//接收指定id的数据,参数为
-//id:要接收的id 
-//buf:用来接数据的容器
+//接收指定id的数据,参数为 1. 要接收的id 2. 用来接数据的容器
 uint8_t can_receive_msg(uint32_t id, uint8_t *buf)
 {
   if (HAL_CAN_GetRxFifoFillLevel(&g_canx_handler, CAN_RX_FIFO0) == 0)     /* 没有接收到数据 */
@@ -352,7 +334,4 @@ uint8_t can_receive( uint8_t *buf)
 
   return g_canx_rxheader.DLC;
 }
-
-
-
 /* USER CODE END 1 */
